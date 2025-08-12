@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Pflanzenmanager mit Profilen</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Pflanzenmanager mit Profilen</h1>
+
+  <div class="form-section">
+    <label>Profil wählen:</label>
+    <select id="profileSelect"></select>
+  </div>
+
+  <h2>Neue Pflanze hinzufügen</h2>
+  <div class="form-inline">
+    <input type="text" id="plantName" placeholder="Name" required>
+    <input type="text" id="plantStrain" placeholder="Sorte">
+    <input type="date" id="plantStart">
+    <input type="text" id="plantNotes" placeholder="Notizen">
+    <button onclick="addPlant()">Hinzufügen</button>
+  </div>
+
+  <h2>Globaler Eintrag</h2>
+  <div class="form-inline">
+    <select id="globalAction">
+      <option value="Gegossen">Gegossen</option>
+      <option value="Gedüngt">Gedüngt</option>
+      <option value="Entlaubt">Entlaubt</option>
+      <option value="Sonstiges">Sonstiges</option>
+    </select>
+    <input type="date" id="globalDate">
+    <input type="text" id="globalNotes" placeholder="Notizen">
+    <button onclick="addGlobalLog()">Bei allen Pflanzen eintragen</button>
+  </div>
+
+  <hr>
+  <div id="plantList"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
