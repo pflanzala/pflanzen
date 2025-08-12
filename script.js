@@ -1,3 +1,6 @@
+const plantsKey = "plantsData";
+
+// Wochenplan Tabelle
 const VPD_TABLE = {
   1: { phase: "Keimung", temp: 24, rh: 70, vpd: 0.6 },
   3: { phase: "Wachstum", temp: 26, rh: 65, vpd: 0.9 },
@@ -7,131 +10,121 @@ const VPD_TABLE = {
   11: { phase: "Ernte", temp: 22, rh: 45, vpd: 1.5 },
 };
 
-let profiles = { "1": [], "2": [] };
-let currentProfile = "1";
-
-function saveProfiles() {
-  localStorage.setItem("pflanzenmanager", JSON.stringify(profiles));
+function loadPlants() {
+  return JSON.parse(localStorage.getItem(plantsKey) || "[]");
 }
 
-function loadProfiles() {
-  const data = localStorage.getItem("pflanzenmanager");
-  if (data) profiles = JSON.parse(data);
+function savePlants(plants) {
+  localStorage.setItem(plantsKey, JSON.stringify(plants));
 }
 
 function generateWeeks(startDate) {
-  let weeks = [];
-  if (!startDate) return weeks;
+  const weeks = [];
   const today = new Date();
   const start = new Date(startDate);
-  const diffWeeks = Math.floor((today - start) / (1000 * 60 * 60 * 24 * 7)) + 1;
+  const currentWeek = Math.floor((today - start) / (7 * 24 * 60 * 60 * 1000)) + 1;
+
   for (let w = 1; w <= 12; w++) {
-    let info = VPD_TABLE[w] || { phase: "–", temp: "-", rh: "-", vpd: "-" };
+    const phaseInfo = VPD_TABLE[w] || { phase: "–", temp: "-", rh: "-", vpd: "-" };
     weeks.push({
       number: w,
-      current: w === diffWeeks,
-      ...info
+      phase: phaseInfo.phase,
+      temp: phaseInfo.temp,
+      rh: phaseInfo.rh,
+      vpd: phaseInfo.vpd,
+      current: w === currentWeek
     });
   }
   return weeks;
 }
 
-function render() {
-  document.getElementById("profileSelect").innerHTML = Object.keys(profiles)
-    .map(p => `<option value="${p}" ${p === currentProfile ? "selected" : ""}>Profil ${p}</option>`)
-    .join("");
+function renderPlants() {
+  const plants = loadPlants();
+  const container = document.getElementById("plantsContainer");
+  container.innerHTML = "";
 
-  const list = document.getElementById("plantList");
-  list.innerHTML = "";
-
-  profiles[currentProfile].forEach((plant, idx) => {
-    let plantDiv = document.createElement("div");
-    plantDiv.className = "plant";
-
-    let weeksHtml = generateWeeks(plant.start_date).map(w =>
-      `<div class="week ${w.current ? "current-week" : ""}">
-         <div>Woche ${w.number}</div>
-         <div>${w.phase}</div>
-         <div>Temp: ${w.temp}°C</div>
-         <div>RH: ${w.rh}%</div>
-         <div>VPD: ${w.vpd}</div>
-       </div>`
-    ).join("");
-
-    let logsHtml = (plant.logs || []).map(l =>
-      `<li>${l.date} — ${l.action}${l.notes ? ": " + l.notes : ""}</li>`
-    ).join("");
-
-    plantDiv.innerHTML = `
-      <h2>${plant.name}</h2>
-      <div><strong>Sorte:</strong> ${plant.strain || ""}</div>
-      <div><strong>Start:</strong> ${plant.start_date || ""}</div>
-      <div><strong>Notizen:</strong> ${plant.notes || ""}</div>
-      <button onclick="deletePlant(${idx})">Löschen</button>
+  plants.forEach((p, idx) => {
+    const div = document.createElement("div");
+    div.className = "plant";
+    div.innerHTML = `
+      <h2>${p.name}</h2>
+      <p><strong>Sorte:</strong> ${p.strain || "-"}</p>
+      <p><strong>Start:</strong> ${p.start_date}</p>
+      <p><strong>Notizen:</strong> ${p.notes || "-"}</p>
+      <button onclick="deletePlant(${idx})" style="background:red;">Löschen</button>
       <h3>Logs</h3>
-      <ul class="log-list">${logsHtml}</ul>
-      <div class="form-inline">
-        <select id="logAction${idx}">
+      <div class="logs">${p.logs.map(l => `${l.date} — ${l.action}${l.notes ? ": " + l.notes : ""}`).join("<br>")}</div>
+      <form onsubmit="addLog(event, ${idx})">
+        <select name="action">
           <option value="Gegossen">Gegossen</option>
           <option value="Gedüngt">Gedüngt</option>
           <option value="Entlaubt">Entlaubt</option>
           <option value="Sonstiges">Sonstiges</option>
         </select>
-        <input type="date" id="logDate${idx}">
-        <input type="text" id="logNotes${idx}" placeholder="Notizen">
-        <button onclick="addLog(${idx})">Eintragen</button>
-      </div>
+        <input type="date" name="date" required>
+        <input type="text" name="notes" placeholder="Notizen">
+        <button>Eintragen</button>
+      </form>
       <h3>Wochenplan</h3>
-      <div style="display:flex; flex-wrap:wrap; gap:5px;">${weeksHtml}</div>
+      <div class="calendar">
+        ${generateWeeks(p.start_date).map(w => `
+          <div class="week ${w.current ? 'current' : ''}">
+            <div>Woche ${w.number}</div>
+            <div>${w.phase}</div>
+            <div>Temp: ${w.temp}°C</div>
+            <div>RH: ${w.rh}%</div>
+            <div>VPD: ${w.vpd}</div>
+          </div>
+        `).join("")}
+      </div>
     `;
-    list.appendChild(plantDiv);
+    container.appendChild(div);
   });
-}
-
-function addPlant() {
-  const name = document.getElementById("plantName").value;
-  const strain = document.getElementById("plantStrain").value;
-  const start = document.getElementById("plantStart").value;
-  const notes = document.getElementById("plantNotes").value;
-
-  profiles[currentProfile].push({
-    name, strain, start_date: start, notes, logs: []
-  });
-
-  saveProfiles();
-  render();
 }
 
 function deletePlant(idx) {
-  profiles[currentProfile].splice(idx, 1);
-  saveProfiles();
-  render();
+  const plants = loadPlants();
+  plants.splice(idx, 1);
+  savePlants(plants);
+  renderPlants();
 }
 
-function addLog(idx) {
-  const action = document.getElementById(`logAction${idx}`).value;
-  const date = document.getElementById(`logDate${idx}`).value;
-  const notes = document.getElementById(`logNotes${idx}`).value;
-  profiles[currentProfile][idx].logs.push({ action, date, notes });
-  saveProfiles();
-  render();
+function addLog(e, idx) {
+  e.preventDefault();
+  const form = e.target;
+  const action = form.action.value;
+  const date = form.date.value;
+  const notes = form.notes.value;
+  const plants = loadPlants();
+  plants[idx].logs.push({ action, date, notes });
+  savePlants(plants);
+  renderPlants();
 }
 
-function addGlobalLog() {
+document.getElementById("addPlantForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = document.getElementById("plantName").value;
+  const strain = document.getElementById("plantStrain").value;
+  const start_date = document.getElementById("plantStartDate").value;
+  const notes = document.getElementById("plantNotes").value;
+  const plants = loadPlants();
+  plants.push({ name, strain, start_date, notes, logs: [] });
+  savePlants(plants);
+  e.target.reset();
+  renderPlants();
+});
+
+document.getElementById("globalLogForm").addEventListener("submit", e => {
+  e.preventDefault();
   const action = document.getElementById("globalAction").value;
   const date = document.getElementById("globalDate").value;
   const notes = document.getElementById("globalNotes").value;
-  profiles[currentProfile].forEach(p => {
-    p.logs.push({ action, date, notes });
-  });
-  saveProfiles();
-  render();
-}
-
-document.getElementById("profileSelect").addEventListener("change", e => {
-  currentProfile = e.target.value;
-  render();
+  const plants = loadPlants();
+  plants.forEach(p => p.logs.push({ action, date, notes }));
+  savePlants(plants);
+  renderPlants();
 });
 
-loadProfiles();
-render();
+// Start
+renderPlants();
+
