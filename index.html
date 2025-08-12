@@ -2,41 +2,43 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Pflanzenmanager mit Profilen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pflanzenmanager</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Pflanzenmanager mit Profilen</h1>
+  <h1>🌱 Pflanzenmanager</h1>
 
-  <div class="form-section">
-    <label>Profil wählen:</label>
-    <select id="profileSelect"></select>
-  </div>
+  <!-- Neue Pflanze -->
+  <section class="card">
+    <h2>Neue Pflanze hinzufügen</h2>
+    <form id="addPlantForm">
+      <input type="text" id="plantName" placeholder="Name" required>
+      <input type="text" id="plantStrain" placeholder="Sorte">
+      <input type="date" id="plantStartDate" required>
+      <input type="text" id="plantNotes" placeholder="Notizen">
+      <button type="submit">Hinzufügen</button>
+    </form>
+  </section>
 
-  <h2>Neue Pflanze hinzufügen</h2>
-  <div class="form-inline">
-    <input type="text" id="plantName" placeholder="Name" required>
-    <input type="text" id="plantStrain" placeholder="Sorte">
-    <input type="date" id="plantStart">
-    <input type="text" id="plantNotes" placeholder="Notizen">
-    <button onclick="addPlant()">Hinzufügen</button>
-  </div>
+  <!-- Globaler Eintrag -->
+  <section class="card">
+    <h2>Globaler Log-Eintrag</h2>
+    <form id="globalLogForm">
+      <select id="globalAction">
+        <option value="Gegossen">Gegossen</option>
+        <option value="Gedüngt">Gedüngt</option>
+        <option value="Entlaubt">Entlaubt</option>
+        <option value="Sonstiges">Sonstiges</option>
+      </select>
+      <input type="date" id="globalDate" required>
+      <input type="text" id="globalNotes" placeholder="Notizen">
+      <button type="submit">Eintragen</button>
+    </form>
+  </section>
 
-  <h2>Globaler Eintrag</h2>
-  <div class="form-inline">
-    <select id="globalAction">
-      <option value="Gegossen">Gegossen</option>
-      <option value="Gedüngt">Gedüngt</option>
-      <option value="Entlaubt">Entlaubt</option>
-      <option value="Sonstiges">Sonstiges</option>
-    </select>
-    <input type="date" id="globalDate">
-    <input type="text" id="globalNotes" placeholder="Notizen">
-    <button onclick="addGlobalLog()">Bei allen Pflanzen eintragen</button>
-  </div>
-
-  <hr>
-  <div id="plantList"></div>
+  <!-- Pflanzenliste -->
+  <section id="plantsContainer"></section>
 
   <script src="script.js"></script>
 </body>
